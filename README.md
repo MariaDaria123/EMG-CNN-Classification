@@ -11,6 +11,14 @@ Raw EMG signals are non-stationary and stochastic. To extract meaningful feature
 - **Windowing Strategy**: 200ms segmentation with 50% overlap to preserve temporal dependencies while increasing the dataset size for model robustness.
 - **Spectrogram Generation**: Transformation of 1D signals into 2D log-mel spectrograms (64 mel-bins). This maps biological activity into a representation that highlights frequency-modulated patterns unique to specific gesture classes.
 
+![Example Spectrograms](example_spectrograms.png)
+
+## Neurocomputation Context
+Beyond the Data Science framework, this pipeline is grounded in neurocomputational principles:
+- **Motor Unit Recruitment**: The spectrograms capture the firing rates and recruitment patterns of motor units within the forearm musculature. By analyzing the spectral envelope, the model decodes the physiological intensity and coordination of muscle groups.
+- **Signal Rectification & Intent**: Full-wave rectification is utilized as a non-linear transformation to extract the neural drive (the signal envelope) from the high-frequency firing patterns, effectively mapping "raw electrical noise" back to "biological motor intent."
+- **Temporal Neural Dynamics**: The 200ms windowing strategy is biologically informed, mirroring the typical integration time of the human motor control system for gesture execution.
+
 ### 2. Dataset Management & Balancing
 A critical challenge in biological signal classification is class imbalance and sample scarcity.
 - **Dynamic Dataset Wrapper**: Custom PyTorch `SpectrogramDataset` implementation for efficient memory management and real-time data loading.
