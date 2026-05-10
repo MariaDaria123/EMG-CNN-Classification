@@ -1,65 +1,54 @@
-# EMG Gesture Classification via Convolutional Neural Networks
+# EMG Gesture Classification: A Deep Learning Approach to Biological Signal Processing
 
 ## Overview
-This repository provides a production-level implementation of a deep learning pipeline for the classification of Electromyography (EMG) signals. The framework integrates advanced digital signal processing (DSP) with a lightweight Convolutional Neural Network (CNN) architecture to decode motor intent from muscle activity.
+This project implements a comprehensive Data Science pipeline for the classification of Electromyography (EMG) signals. The objective is to decode motor intent from neuromuscular activity by transforming high-dimensional time-series data into spectral feature maps for Convolutional Neural Network (CNN) modeling.
 
-## Signal Processing Pipeline
-The preprocessing stage is critical for mitigating the inherent stochasticity and noise in biological signals.
+## Data Science Pipeline
 
-### 1. Digital Filtering
-Raw EMG data is processed through a zero-phase digital filter chain:
-- **Bandpass Filter**: 4th-order Butterworth filter (20 - 450 Hz) to isolate the relevant bio-signal bandwidth and remove motion artifacts/high-frequency noise.
-- **Full-wave Rectification**: Absolute value transformation to prepare the signal for envelope extraction.
+### 1. Feature Engineering: Spectral Transformation
+Raw EMG signals are non-stationary and stochastic. To extract meaningful features, we employ a frequency-domain transformation:
+- **Preprocessing**: Signal normalization (z-score) and rectification to stabilize variance.
+- **Windowing Strategy**: 200ms segmentation with 50% overlap to preserve temporal dependencies while increasing the dataset size for model robustness.
+- **Spectrogram Generation**: Transformation of 1D signals into 2D log-mel spectrograms (64 mel-bins). This maps biological activity into a representation that highlights frequency-modulated patterns unique to specific gesture classes.
 
-### 2. Time-Frequency Transformation
-Continuous signals are segmented using a sliding window approach (200ms duration, 100ms stride). Each window is transformed into the frequency domain via:
-- **Log-Mel Spectrograms**: Computed using a 256-point STFT with a Hanning window.
-- **Mel Filterbank**: 64 frequency bins across the effective bandwidth.
-- **Logarithmic Scaling**: Enhances feature representation of spectral energy distributions.
+### 2. Dataset Management & Balancing
+A critical challenge in biological signal classification is class imbalance and sample scarcity.
+- **Dynamic Dataset Wrapper**: Custom PyTorch `SpectrogramDataset` implementation for efficient memory management and real-time data loading.
+- **Class Imbalance Mitigation**: Implementation of **Inverse Frequency Weighting** within the `nn.CrossEntropyLoss` function. This ensures that the model does not overfit to the majority class (e.g., 'Rest') and maintains high sensitivity to rarer gesture events.
+- **Validation Strategy**: Stratified 80/20 train-test split with fixed seeding for reproducibility.
 
-## Model Architecture
-The classification engine employs a custom ConvNet optimized for CPU-efficient inference in real-time neuroprosthetic applications.
+## Neural Architecture Design
+The core model is a custom ConvNet designed for low-latency inference on time-series spectral features.
 
-### Layer Specification:
-- **Input Layer**: (1, 64, T) where T represents temporal frames.
-- **Convolutional Blocks**: Three sequential blocks featuring:
-    - 2D Convolution (3x3 kernels)
-    - Batch Normalization (post-convolution)
-    - ReLU Activation
-    - Max Pooling (Block 1 only, 2x2 stride)
-- **Global Average Pooling (GAP)**: Provides spatial invariance and reduces total parameter count.
-- **Classifier Head**: Fully connected layer with 0.3 Dropout regularization.
+### Architecture Specifications:
+- **Feature Extractor**: Three convolutional layers with increasing filter depth (32, 64, 128).
+- **Regularization**: Batch Normalization and 0.3 Dropout to prevent overfitting on small-scale biological datasets.
+- **Adaptive Pooling**: Global Average Pooling (GAP) is used to ensure the model is agnostic to varying window lengths and to reduce the total parameter count to ~155k, optimizing for edge-device deployment.
 
-### Parameter Efficiency:
-- **Total Trainable Parameters**: 155,908
-- **Model Storage**: ~0.60 MB
-- **Inference Latency**: Optimized for low-power edge devices.
+## Statistical Evaluation
+Model performance is evaluated using metrics that go beyond simple accuracy to account for class distribution and classification rigor.
 
-## Performance Evaluation
-The model was validated using macro-averaged F1-scores and multiclass confusion matrices.
+### Key Performance Indicators:
+| Metric | Result | Context |
+|--------|--------|---------|
+| **Validation Accuracy** | 83% | Overall classification success across all states. |
+| **Macro F1-Score** | 0.74 | Robustness indicator across imbalanced classes. |
+| **Model Size** | 0.60 MB | Efficient memory footprint for embedded systems. |
 
-### Quantitative Metrics:
-| Classification Category | Precision | Recall | F1-Score |
-|-------------------------|-----------|--------|----------|
-| Rest State              | 0.96      | 0.92   | 0.94     |
-| Extension (Open)        | 0.61      | 0.73   | 0.67     |
-| Contraction (Fist)      | 0.67      | 0.58   | 0.62     |
+## Execution Guide
 
-## Deployment and Execution
-The environment requires PyTorch and Librosa for signal processing and model training.
-
-### Environment Setup:
+### Dependency Installation:
 ```bash
 pip install -r requirements.txt
 ```
 
-### Pipeline Execution:
+### Pipeline Deployment:
 ```bash
 python train.py
 ```
 
 ## Repository Structure
-- `datasets/`: PyTorch Dataset implementation for spectral features.
-- `models/`: CNN architecture definition and training logic.
-- `transforms/`: Signal-to-spectral transformation utilities.
-- `train.py`: Primary execution script for the end-to-end pipeline.
+- `datasets/`: Feature mapping and dataset normalization logic.
+- `models/`: CNN architecture and training optimization loops.
+- `transforms/`: Signal-to-spectral engineering utilities.
+- `train.py`: Main execution script for the end-to-end Data Science pipeline.
